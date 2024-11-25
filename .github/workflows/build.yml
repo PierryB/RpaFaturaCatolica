@@ -52,7 +52,7 @@ jobs:
       - name: Verificar arquivos de cobertura gerados
         working-directory: ./FaturaPdfCatolica
         run: |
-          echo "Verificando arquivos no diretório FaturaPdfCatolica/TestResults:"
+          echo "Verificando arquivos no diretório TestResults:"
           ls -R ./TestResults/
 
       - name: Build and analyze
@@ -67,5 +67,6 @@ jobs:
             /d:sonar.host.url="https://sonarcloud.io" `
             /d:sonar.login="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.cs.opencover.reportsPaths="./TestResults/**/coverage.cobertura.xml"
+          cd ../ # Retorna para o diretório da solução, se necessário
           dotnet build
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
