@@ -44,19 +44,20 @@ jobs:
           New-Item -Path .\.sonar\scanner -ItemType Directory
           dotnet tool install dotnet-sonarscanner --tool-path .\.sonar\scanner
 
+      - name: Verify SonarQube Cloud scanner installation
+        run: |
+          .\.sonar\scanner\dotnet-sonarscanner --version
+
       - name: Run tests and generate coverage report
-        working-directory: ./FaturaPdfCatolica
         run: |
           dotnet test --collect "XPlat Code Coverage"
 
       - name: Verificar arquivos de cobertura gerados
-        working-directory: ./FaturaPdfCatolica
         run: |
           echo "Verificando arquivos no diretório TestResults:"
           ls -R ./TestResults/
 
       - name: Build and analyze
-        working-directory: ./FaturaPdfCatolica
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -67,6 +68,5 @@ jobs:
             /d:sonar.host.url="https://sonarcloud.io" `
             /d:sonar.login="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.cs.opencover.reportsPaths="./TestResults/**/coverage.cobertura.xml"
-          cd ../ # Retorna para o diretório da solução, se necessário
           dotnet build
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
