@@ -15,47 +15,50 @@ jobs:
         with:
           java-version: 17
           distribution: 'zulu'
-          
+
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-          
+          fetch-depth: 0
+
       - name: Cache SonarQube Cloud packages
         uses: actions/cache@v4
         with:
-          path: ~\sonar\cache
+          path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
-          
+
       - name: Cache SonarQube Cloud scanner
         id: cache-sonar-scanner
         uses: actions/cache@v4
         with:
-          path: .\.sonar\scanner
+          path: ./.sonar/scanner
           key: ${{ runner.os }}-sonar-scanner
           restore-keys: ${{ runner.os }}-sonar-scanner
-          
+
       - name: Install SonarQube Cloud scanner
         if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
         shell: powershell
         run: |
           New-Item -Path .\.sonar\scanner -ItemType Directory
-          dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
-          
-      - name: Run tests and generate report
-        run: dotnet test Application.Tests --logger "trx;LogFileName=TestResults.trx"
+          dotnet tool install dotnet-sonarscanner --tool-path .\.sonar\scanner
+
+      - name: Run tests and generate coverage report
+        run: |
+          dotnet test Application.Tests `
+            /p:CollectCoverage=true `
+            /p:CoverletOutput=./coverage/ `
+            /p:CoverletOutputFormat=cobertura
 
       - name: Build and analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        shell: powershell
         run: |
           .\.sonar\scanner\dotnet-sonarscanner begin `
             /k:"PierryB_RpaFaturaCatolica" `
             /o:"rpasboettscher" `
-            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.host.url="https://sonarcloud.io" `
-            /d:sonar.cs.vstest.reportsPaths="Application.Tests/TestResults.trx"
+            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" `
+            /d:sonar.cs.opencover.reportsPaths="./coverage/coverage.cobertura.xml"
           dotnet build
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
