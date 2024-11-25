@@ -1,0 +1,7 @@
+*.vsidx
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.local-chromium/
